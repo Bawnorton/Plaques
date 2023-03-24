@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "plaques:block/blackstone_plaque"
+    }
+  }
+}

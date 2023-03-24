@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "plaques",
+  "version": "${version}",
+  "name": "Plaques",
+  "description": "Adds stone plaques to the game.",
+  "authors": [
+    "Bawnorton"
+  ],
+  "contact": {
+    "homepage": "https://fabricmc.net/",
+    "sources": "https://github.com/FabricMC/fabric-example-mod"
+  },
+  "license": "MIT License",
+  "icon": "assets/plaques/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.bawnorton.plaques.fabric.PlaquesFabric"
+    ],
+    "client": [
+      "com.bawnorton.plaques.fabric.PlaquesClientFabric"
+    ]
+  },
+  "mixins": [
+    "plaques.mixins.json",
+    "plaques-common.mixins.json"
+  ],
+  "depends": {
+    "fabric": "*",
+    "minecraft": ">=1.19.2",
+    "architectury": ">=6.2.43"
+  }
+}
