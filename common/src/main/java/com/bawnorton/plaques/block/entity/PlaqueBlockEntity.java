@@ -23,14 +23,14 @@ import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 
 public class PlaqueBlockEntity extends BlockEntity {
-    private static final String[] TEXT_KEYS = new String[]{"Text1", "Text2", "Text3", "Text4"};
-    private static final String[] FILTERED_TEXT_KEYS = new String[]{"FilteredText1", "FilteredText2", "FilteredText3", "FilteredText4"};
-    private final Text[] texts;
-    private final Text[] filteredTexts;
+    private static final String[] TEXT_KEYS = new String[getLineCount()];
+    private static final String[] FILTERED_TEXT_KEYS = new String[getLineCount()];
+    private final List<Text> texts;
+    private final List<Text> filteredTexts;
     private boolean editable;
     @Nullable
     private UUID editor;
@@ -42,10 +42,17 @@ public class PlaqueBlockEntity extends BlockEntity {
 
     public PlaqueBlockEntity(BlockPos pos, BlockState state) {
         super(Plaques.PLAQUE.get(), pos, state);
-        this.texts = new Text[]{ScreenTexts.EMPTY, ScreenTexts.EMPTY, ScreenTexts.EMPTY, ScreenTexts.EMPTY};
-        this.filteredTexts = new Text[]{ScreenTexts.EMPTY, ScreenTexts.EMPTY, ScreenTexts.EMPTY, ScreenTexts.EMPTY};
+        this.texts = new ArrayList<>(){{for(int i = 0; i < getLineCount(); ++i) add(ScreenTexts.EMPTY);}};
+        this.filteredTexts = new ArrayList<>(){{for(int i = 0; i < getLineCount(); ++i) add(ScreenTexts.EMPTY);}};
         this.editable = true;
         this.textColor = DyeColor.BLACK;
+    }
+
+    static {
+        for(int i = 0; i < getLineCount(); ++i) {
+            TEXT_KEYS[i] = "Text" + (i + 1);
+            FILTERED_TEXT_KEYS[i] = "FilteredText" + (i + 1);
+        }
     }
 
     public boolean setAccent(Item item) {
@@ -54,12 +61,16 @@ public class PlaqueBlockEntity extends BlockEntity {
 
     protected void writeNbt(NbtCompound nbt) {
         super.writeNbt(nbt);
-
-        for(int i = 0; i < 4; ++i) {
-            Text text = this.texts[i];
+//        try {
+//            throw new RuntimeException("stacktrace");
+//        } catch (Exception e) {
+//            Plaques.LOGGER.info("PlaqueBlockEntity.writeNbt() called from: ", e);
+//        }
+        for(int i = 0; i < getLineCount(); ++i) {
+            Text text = texts.get(i);
             String string = Text.Serializer.toJson(text);
             nbt.putString(TEXT_KEYS[i], string);
-            Text text2 = this.filteredTexts[i];
+            Text text2 = filteredTexts.get(i);
             if (!text2.equals(text)) {
                 nbt.putString(FILTERED_TEXT_KEYS[i], Text.Serializer.toJson(text2));
             }
@@ -74,15 +85,15 @@ public class PlaqueBlockEntity extends BlockEntity {
         super.readNbt(nbt);
         this.textColor = DyeColor.byName(nbt.getString("Color"), DyeColor.BLACK);
 
-        for(int i = 0; i < 4; ++i) {
+        for(int i = 0; i < getLineCount(); ++i) {
             String string = nbt.getString(TEXT_KEYS[i]);
             Text text = this.parseTextFromJson(string);
-            this.texts[i] = text;
+            this.texts.set(i, text);
             String string2 = FILTERED_TEXT_KEYS[i];
             if (nbt.contains(string2, 8)) {
-                this.filteredTexts[i] = this.parseTextFromJson(nbt.getString(string2));
+                this.filteredTexts.set(i, this.parseTextFromJson(nbt.getString(string2)));
             } else {
-                this.filteredTexts[i] = text;
+                this.filteredTexts.set(i, text);
             }
         }
 
@@ -115,7 +126,7 @@ public class PlaqueBlockEntity extends BlockEntity {
     }
 
     public Text getTextOnRow(int row, boolean filtered) {
-        return this.getTexts(filtered)[row];
+        return this.getTexts(filtered).get(row);
     }
 
     public void setTextOnRow(int row, Text text) {
@@ -123,17 +134,22 @@ public class PlaqueBlockEntity extends BlockEntity {
     }
 
     public void setTextOnRow(int row, Text text, Text filteredText) {
-        this.texts[row] = text;
-        this.filteredTexts[row] = filteredText;
+        this.texts.set(row, text);
+        this.filteredTexts.set(row, filteredText);
         this.textsBeingEdited = null;
+//        try {
+//            throw new RuntimeException("stacktrace");
+//        } catch (Exception e) {
+//            Plaques.LOGGER.info("PlaqueBlockEntity.setTextOnRow() called from: ", e);
+//        }
     }
 
     public OrderedText[] updateSign(boolean filterText, Function<Text, OrderedText> textOrderingFunction) {
         if (this.textsBeingEdited == null || this.filterText != filterText) {
             this.filterText = filterText;
-            this.textsBeingEdited = new OrderedText[4];
+            this.textsBeingEdited = new OrderedText[getLineCount()];
 
-            for(int i = 0; i < 4; ++i) {
+            for(int i = 0; i < getLineCount(); ++i) {
                 this.textsBeingEdited[i] = textOrderingFunction.apply(this.getTextOnRow(i, filterText));
             }
         }
@@ -141,7 +157,7 @@ public class PlaqueBlockEntity extends BlockEntity {
         return this.textsBeingEdited;
     }
 
-    private Text[] getTexts(boolean filtered) {
+    private List<Text> getTexts(boolean filtered) {
         return filtered ? this.filteredTexts : this.texts;
     }
 
@@ -249,11 +265,15 @@ public class PlaqueBlockEntity extends BlockEntity {
         throw new IllegalStateException("PlaqueBlockEntity is not a PlaqueBlock");
     }
 
+    public static int getLineCount() {
+        return 4;
+    }
+
     public int getMaxTextWidth() {
-        return 90;
+        return 80;
     }
 
     public int getTextLineHeight() {
-        return 10;
+        return 15;
     }
 }
