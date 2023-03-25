@@ -1,14 +1,16 @@
 package com.bawnorton.plaques.item;
 
 import com.bawnorton.plaques.block.entity.PlaqueBlockEntity;
+import com.bawnorton.plaques.networking.Networking;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ShapeContext;
-import net.minecraft.block.entity.SignBlockEntity;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
@@ -43,7 +45,10 @@ public class PlaqueItem extends BlockItem {
     protected boolean postPlacement(BlockPos pos, World world, @Nullable PlayerEntity player, ItemStack stack, BlockState state) {
         boolean bl = super.postPlacement(pos, world, player, stack, state);
         if (!world.isClient && !bl && player != null) {
-            player.openEditSignScreen((SignBlockEntity) world.getBlockEntity(pos));
+            BlockEntity blockEntity = world.getBlockEntity(pos);
+            if (blockEntity instanceof PlaqueBlockEntity plaqueBlockEntity) {
+                Networking.sendOpenPlaqueScreen((ServerPlayerEntity) player, plaqueBlockEntity);
+            }
         }
 
         return bl;

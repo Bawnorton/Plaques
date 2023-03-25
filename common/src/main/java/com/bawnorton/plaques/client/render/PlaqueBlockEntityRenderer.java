@@ -1,51 +1,33 @@
 package com.bawnorton.plaques.client.render;
 
-import com.bawnorton.plaques.block.PlaqueBlock;
 import com.bawnorton.plaques.block.entity.PlaqueBlockEntity;
-import com.bawnorton.plaques.client.render.model.PlaqueEntityModelLayers;
-import com.bawnorton.plaques.util.PlaqueType;
-import com.google.common.collect.ImmutableMap;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.WallSignBlock;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.model.*;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
 import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.text.OrderedText;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3f;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 public class PlaqueBlockEntityRenderer implements BlockEntityRenderer<PlaqueBlockEntity> {
     public static final int MAX_TEXT_WIDTH = 90;
     private static final int TEXT_HEIGHT = 10;
     private static final int RENDER_DISTANCE = MathHelper.square(16);
-    private final Map<PlaqueType, PlaqueModel> typeToModel;
     private final TextRenderer textRenderer;
 
     public PlaqueBlockEntityRenderer(BlockEntityRendererFactory.Context context) {
-        this.typeToModel = Arrays.stream(PlaqueType.values()).collect(ImmutableMap.toImmutableMap(type -> type, type -> new PlaqueModel(context.getLayerModelPart(PlaqueEntityModelLayers.createPlaque(type)))));
         this.textRenderer = context.getTextRenderer();
-    }
-
-    public static TexturedModelData getTextureModelData() {
-        ModelData modelData = new ModelData();
-        ModelPartData partData = modelData.getRoot();
-        partData.addChild("plaque", ModelPartBuilder.create().uv(0, 0).cuboid(-12.0F, -14.0F, -1.0F, 24.0F, 12.0F, 2.0F), ModelTransform.NONE);
-        return TexturedModelData.of(modelData, 64, 32);
     }
 
     @Override
@@ -53,56 +35,53 @@ public class PlaqueBlockEntityRenderer implements BlockEntityRenderer<PlaqueBloc
         BlockState state = entity.getCachedState();
 
         matrices.push();
-        PlaqueType type = PlaqueType.fromBlock(state.getBlock());
-        PlaqueModel model = this.typeToModel.get(type);
-        if(model == null) {
-            throw new IllegalStateException("No model for plaque type " + type);
-        }
+        matrices.translate(0.5F, 0.5F, 0.5F);
+        float h = -state.get(WallSignBlock.FACING).getOpposite().asRotation();
+        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(h));
+        matrices.translate(0.0F, -0.3125F, -0.4375F);
 
-        matrices.translate(0.5, 0.5, 0.5);
-        float rotation = -state.get(PlaqueBlock.FACING).asRotation();
-        matrices.multiply(Vec3f.POSITIVE_Y.getDegreesQuaternion(rotation));
-        matrices.translate(0.0, -0.3125, -0.4375);
+        renderText(entity, matrices, vertexConsumers, light, 0.666667f);
+    }
 
-        matrices.push();
-        matrices.scale(0.6666667F, -0.6666667F, -0.6666667F);
-        SpriteIdentifier spriteIdentifier = PlaqueTexturedRenderLayers.getPlaqueTextureId(type);
-        VertexConsumer vertexConsumer = spriteIdentifier.getVertexConsumer(vertexConsumers, model::getLayer);
-        model.root.render(matrices, vertexConsumer, light, overlay);
-        matrices.pop();
-        matrices.translate(0.0, 0.33333334F, 0.046666667F);
-        matrices.scale(0.010416667F, -0.010416667F, 0.010416667F);
-        int textColor = getColour(entity);
-
-        OrderedText[] orderedTexts = entity.updateSign(MinecraftClient.getInstance().shouldFilterText(), text -> {
-            List<OrderedText> list = this.textRenderer.wrapLines(text, MAX_TEXT_WIDTH);
+    private void renderText(PlaqueBlockEntity blockEntity, MatrixStack matrices, VertexConsumerProvider verticesProvider, int light, float scale) {
+        float f = 0.015625F * scale;
+        Vec3d vec3d = this.getTextOffset(scale);
+        matrices.translate(vec3d.x, vec3d.y, vec3d.z);
+        matrices.scale(f, -f, f);
+        int i = getColour(blockEntity);
+        int j = 4 * blockEntity.getTextLineHeight() / 2;
+        OrderedText[] orderedTexts = blockEntity.updateSign(MinecraftClient.getInstance().shouldFilterText(), (text) -> {
+            List<OrderedText> list = this.textRenderer.wrapLines(text, blockEntity.getMaxTextWidth());
             return list.isEmpty() ? OrderedText.EMPTY : list.get(0);
         });
-
-        int colour;
-        boolean shouldRenderOutline;
-        int plaqueLight;
-        if(entity.isGlowingText()) {
-            colour = entity.getTextColor().getSignColor();
-            shouldRenderOutline = shouldRender(entity, colour);
-            plaqueLight = 15728880;
+        int k;
+        boolean bl;
+        int l;
+        if (blockEntity.isGlowingText()) {
+            k = blockEntity.getTextColor().getSignColor();
+            bl = shouldRender(blockEntity, k);
+            l = 15728880;
         } else {
-            colour = textColor;
-            shouldRenderOutline = false;
-            plaqueLight = light;
+            k = i;
+            bl = false;
+            l = light;
         }
 
-        for(int i = 0; i < 4; ++i) {
-            OrderedText orderedText = orderedTexts[i];
-            float width = (float)(-this.textRenderer.getWidth(orderedText) / 2);
-            if(shouldRenderOutline) {
-                this.textRenderer.drawWithOutline(orderedText, width, (float)(i * TEXT_HEIGHT - 20), colour, textColor, matrices.peek().getPositionMatrix(), vertexConsumers, plaqueLight);
+        for(int m = 0; m < 4; ++m) {
+            OrderedText orderedText = orderedTexts[m];
+            float g = (float)(-this.textRenderer.getWidth(orderedText) / 2);
+            if (bl) {
+                this.textRenderer.drawWithOutline(orderedText, g, (float)(m * blockEntity.getTextLineHeight() - j), k, i, matrices.peek().getPositionMatrix(), verticesProvider, l);
             } else {
-                this.textRenderer.draw(orderedText, width, (float)(i * TEXT_HEIGHT - 20), colour, false, matrices.peek().getPositionMatrix(), vertexConsumers, false, 0, plaqueLight);
+                this.textRenderer.draw(orderedText, g, (float)(m * blockEntity.getTextLineHeight() - j), k, false, matrices.peek().getPositionMatrix(), verticesProvider, false, 0, l);
             }
         }
 
         matrices.pop();
+    }
+
+    Vec3d getTextOffset(float scale) {
+        return new Vec3d(0.0, 0.5F * scale, 0.07F * scale);
     }
 
     private static boolean shouldRender(PlaqueBlockEntity plaqueEntity, int plaqueColour) {
@@ -126,19 +105,5 @@ public class PlaqueBlockEntityRenderer implements BlockEntityRenderer<PlaqueBloc
         int green = (int) (NativeImage.getGreen(colour) * 0.4);
         int blue = (int) (NativeImage.getBlue(colour) * 0.4);
         return NativeImage.packColor(0, blue, green, red);
-    }
-
-    public static final class PlaqueModel extends Model {
-        public final ModelPart root;
-
-        public PlaqueModel(ModelPart root) {
-            super(RenderLayer::getEntityCutoutNoCull);
-            this.root = root;
-        }
-
-        @Override
-        public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha) {
-            this.root.render(matrices, vertices, light, overlay, red, green, blue, alpha);
-        }
     }
 }

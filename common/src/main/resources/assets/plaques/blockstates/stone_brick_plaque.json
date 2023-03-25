@@ -1,7 +1,19 @@
 {
   "variants": {
-    "": {
+    "facing=north": {
       "model": "plaques:block/stone_brick_plaque"
+    },
+    "facing=east": {
+      "model": "plaques:block/stone_brick_plaque",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "plaques:block/stone_brick_plaque",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "plaques:block/stone_brick_plaque",
+      "y": 270
     }
   }
 }

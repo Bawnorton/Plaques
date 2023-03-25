@@ -1,15 +1,15 @@
 package com.bawnorton.plaques.fabric;
 
-import com.bawnorton.plaques.block.entity.PlaqueBlockEntityTypes;
+import com.bawnorton.plaques.Plaques;
 import com.bawnorton.plaques.client.PlaquesClient;
-import com.bawnorton.plaques.client.render.PlaqueBlockEntityRenderer;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
+import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
+import net.minecraft.client.render.RenderLayer;
 
 public class PlaquesClientFabric implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         PlaquesClient.init();
-        BlockEntityRendererRegistry.register(PlaqueBlockEntityTypes.PLAQUE, PlaqueBlockEntityRenderer::new);
+        BlockRenderLayerMap.INSTANCE.putBlock(Plaques.ANDESITE_PLAQUE.get(), RenderLayer.getCutout());
     }
 }

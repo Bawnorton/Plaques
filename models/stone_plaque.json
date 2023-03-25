@@ -1,8 +1,7 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"1": "minecraft:block/red_sandstone_top",
-		"particle": "minecraft:block/red_sandstone_top"
+		"1": "block/stone"
 	},
 	"elements": [
 		{
@@ -16,6 +15,14 @@
 				"up": {"uv": [16, 14, 0, 12], "texture": "#1"},
 				"down": {"uv": [16, 12, 0, 14], "texture": "#1"}
 			}
+		}
+	],
+	"groups": [
+		{
+			"name": "VoxelShapes",
+			"origin": [0, 0, 0],
+			"color": 0,
+			"children": [0]
 		}
 	]
 }
