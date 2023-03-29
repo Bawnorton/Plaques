@@ -59,13 +59,9 @@ public class PlaqueBlockEntity extends BlockEntity {
         return false;
     }
 
+    // server
     protected void writeNbt(NbtCompound nbt) {
         super.writeNbt(nbt);
-//        try {
-//            throw new RuntimeException("stacktrace");
-//        } catch (Exception e) {
-//            Plaques.LOGGER.info("PlaqueBlockEntity.writeNbt() called from: ", e);
-//        }
         for(int i = 0; i < getLineCount(); ++i) {
             Text text = texts.get(i);
             String string = Text.Serializer.toJson(text);
@@ -133,15 +129,11 @@ public class PlaqueBlockEntity extends BlockEntity {
         this.setTextOnRow(row, text, text);
     }
 
+    // client
     public void setTextOnRow(int row, Text text, Text filteredText) {
         this.texts.set(row, text);
         this.filteredTexts.set(row, filteredText);
         this.textsBeingEdited = null;
-//        try {
-//            throw new RuntimeException("stacktrace");
-//        } catch (Exception e) {
-//            Plaques.LOGGER.info("PlaqueBlockEntity.setTextOnRow() called from: ", e);
-//        }
     }
 
     public OrderedText[] updateSign(boolean filterText, Function<Text, OrderedText> textOrderingFunction) {
@@ -254,7 +246,7 @@ public class PlaqueBlockEntity extends BlockEntity {
 
     private void updateListeners() {
         this.markDirty();
-        this.world.updateListeners(this.getPos(), this.getCachedState(), this.getCachedState(), 3);
+        this.world.updateListeners(this.getPos(), this.getCachedState(), this.getCachedState(), Block.NOTIFY_LISTENERS);
     }
 
     public PlaqueType getPlaqueType() {

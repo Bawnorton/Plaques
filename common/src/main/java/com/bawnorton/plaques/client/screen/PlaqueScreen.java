@@ -1,6 +1,7 @@
 package com.bawnorton.plaques.client.screen;
 
 import com.bawnorton.plaques.block.entity.PlaqueBlockEntity;
+import com.bawnorton.plaques.client.networking.ClientNetworking;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
@@ -10,7 +11,6 @@ import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.SelectionManager;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.network.packet.c2s.play.UpdateSignC2SPacket;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
 import org.joml.Matrix4f;
@@ -49,11 +49,7 @@ public class PlaqueScreen extends Screen {
     }
 
     public void removed() {
-        ClientPlayNetworkHandler clientPlayNetworkHandler = this.client.getNetworkHandler();
-        if (clientPlayNetworkHandler != null) {
-            clientPlayNetworkHandler.sendPacket(new UpdateSignC2SPacket(this.plaqueEntity.getPos(), this.text[0], this.text[1], this.text[2], this.text[3]));
-        }
-
+        ClientNetworking.updatePlaque(this.plaqueEntity.getPos(), this.text[0], this.text[1], this.text[2], this.text[3]);
         this.plaqueEntity.setEditable(true);
     }
 

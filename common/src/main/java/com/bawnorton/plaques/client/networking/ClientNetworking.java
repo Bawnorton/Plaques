@@ -4,9 +4,11 @@ import com.bawnorton.plaques.block.entity.PlaqueBlockEntity;
 import com.bawnorton.plaques.client.screen.PlaqueScreen;
 import com.bawnorton.plaques.networking.Networking;
 import dev.architectury.networking.NetworkManager;
+import io.netty.buffer.Unpooled;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.util.math.BlockPos;
 
 public class ClientNetworking {
@@ -24,5 +26,16 @@ public class ClientNetworking {
             final PlaqueBlockEntity plaqueBlock = (PlaqueBlockEntity) blockEntity;
             client.execute(() -> client.setScreen(new PlaqueScreen(plaqueBlock, client.shouldFilterText())));
         });
+    }
+
+    public static void updatePlaque(BlockPos pos, String line1, String line2, String line3, String line4) {
+        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+        buf.writeBlockPos(pos);
+        buf.writeString(line1);
+        buf.writeString(line2);
+        buf.writeString(line3);
+        buf.writeString(line4);
+
+        NetworkManager.sendToServer(Networking.UPDATE_PLAQUE, buf);
     }
 }
