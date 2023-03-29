@@ -4,19 +4,20 @@ import com.bawnorton.plaques.block.entity.PlaqueBlockEntity;
 import com.bawnorton.plaques.client.networking.ClientNetworking;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.block.WallSignBlock;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.SelectionManager;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
+import net.minecraft.util.Pair;
+import net.minecraft.util.math.Direction;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-
-import java.util.stream.IntStream;
 
 @SuppressWarnings("ConstantConditions")
 public class PlaqueScreen extends Screen {
@@ -24,6 +25,7 @@ public class PlaqueScreen extends Screen {
     private final String[] text;
     private int ticksSinceOpened;
     private int currentRow;
+    private int numPlaques;
     private SelectionManager selectionManager;
 
     private static final Vector3f TEXT_SCALE = new Vector3f(0.9765628F, 0.9765628F, 0.9765628F);
@@ -31,25 +33,43 @@ public class PlaqueScreen extends Screen {
     public PlaqueScreen(PlaqueBlockEntity plaqueEntity, boolean filtered) {
         super(Text.translatable("plaques.edit"));
         this.plaqueEntity = plaqueEntity;
-        this.text = IntStream.range(0, 4).mapToObj(row -> plaqueEntity.getTextOnRow(row, filtered)).map(Text::getString).toArray(String[]::new);
+        Direction direction = plaqueEntity.getCachedState().get(WallSignBlock.FACING);
+        Direction right = direction.rotateYClockwise();
+        Pair<Integer, String[]> depthAndText = getActualText(plaqueEntity.getText(filtered), filtered, plaqueEntity, plaqueEntity, right, 1);
+        this.text = depthAndText.getRight();
+        this.numPlaques = depthAndText.getLeft();
 
         super.init(MinecraftClient.getInstance(), MinecraftClient.getInstance().getWindow().getScaledWidth(), MinecraftClient.getInstance().getWindow().getScaledHeight());
+    }
+
+    private Pair<Integer, String[]> getActualText(String[] text, boolean filtered, PlaqueBlockEntity leftMost, PlaqueBlockEntity rightPlaque, Direction right, int depth) {
+        if(rightPlaque.getPlaqueType().equals(leftMost.getPlaqueType())) {
+            String[] rightText = rightPlaque.getText(filtered);
+            for(int i = 0; i < rightText.length; i++) {
+                text[i] += rightText[i];
+            }
+            BlockEntity nextRight = leftMost.getWorld().getBlockEntity(rightPlaque.getPos().offset(right));
+            if(nextRight instanceof PlaqueBlockEntity nextRightPlaque) {
+                return getActualText(text, filtered, leftMost, nextRightPlaque, right,depth + 1);
+            }
+        }
+        return new Pair<>(depth, text);
     }
 
     @Override
     protected void init() {
         this.addDrawableChild(ButtonWidget.builder(ScreenTexts.DONE, (button) -> {
             this.finishEditing();
-        }).dimensions(this.width / 2 - 100, this.height / 4 + 120, 200, 20).build());
+        }).dimensions(this.width / 2 - 100, this.height / PlaqueBlockEntity.getLineCount() + 120, 200, 20).build());
         this.plaqueEntity.setEditable(false);
         this.selectionManager = new SelectionManager(() -> this.text[this.currentRow], (rowText) -> {
             this.text[this.currentRow] = rowText;
             this.plaqueEntity.setTextOnRow(this.currentRow, Text.literal(rowText));
-        }, SelectionManager.makeClipboardGetter(this.client), SelectionManager.makeClipboardSetter(this.client), (string) -> this.client.textRenderer.getWidth(string) <= this.plaqueEntity.getMaxTextWidth());
+        }, SelectionManager.makeClipboardGetter(this.client), SelectionManager.makeClipboardSetter(this.client), (string) -> this.client.textRenderer.getWidth(string) <= this.plaqueEntity.getMaxTextWidth() * this.numPlaques);
     }
 
     public void removed() {
-        ClientNetworking.updatePlaque(this.plaqueEntity.getPos(), this.text[0], this.text[1], this.text[2], this.text[3]);
+        ClientNetworking.updatePlaque(this.plaqueEntity.getPos(), this.plaqueEntity.getText(client.shouldFilterText()));
         this.plaqueEntity.setEditable(true);
     }
 
@@ -76,13 +96,15 @@ public class PlaqueScreen extends Screen {
 
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (keyCode == 265) {
-            this.currentRow = this.currentRow - 1 & 3;
+            this.currentRow = this.currentRow - 1;
+            if(this.currentRow < 0) this.currentRow = PlaqueBlockEntity.getLineCount() - 1;
             this.selectionManager.putCursorAtEnd();
             return true;
         } else if (keyCode != 264 && keyCode != 257 && keyCode != 335) {
             return this.selectionManager.handleSpecialKey(keyCode) || super.keyPressed(keyCode, scanCode, modifiers);
         } else {
-            this.currentRow = this.currentRow + 1 & 3;
+            this.currentRow = this.currentRow + 1;
+            if(this.currentRow >= PlaqueBlockEntity.getLineCount()) this.currentRow = 0;
             this.selectionManager.putCursorAtEnd();
             return true;
         }
@@ -116,19 +138,19 @@ public class PlaqueScreen extends Screen {
         matrices.push();
         this.renderPlaqueBackground(matrices, immediate);
         matrices.pop();
-        this.renderSignText(matrices, immediate);
+        this.renderPlaqueText(matrices, immediate);
         matrices.pop();
     }
 
-    private void renderSignText(MatrixStack matrices, VertexConsumerProvider.Immediate vertexConsumers) {
+    private void renderPlaqueText(MatrixStack matrices, VertexConsumerProvider.Immediate vertexConsumers) {
         matrices.translate(0.0F, 0.0F, 4.0F);
         Vector3f vector3f = this.getTextScale();
         matrices.scale(vector3f.x(), vector3f.y(), vector3f.z());
-        int i = this.plaqueEntity.getTextColor().getSignColor();
+        int i = this.plaqueEntity.getTextColor().getColour();
         boolean bl = this.ticksSinceOpened / 6 % 2 == 0;
         int j = this.selectionManager.getSelectionStart();
         int k = this.selectionManager.getSelectionEnd();
-        int l = 4 * this.plaqueEntity.getTextLineHeight() / 2;
+        int l = PlaqueBlockEntity.getLineCount() * this.plaqueEntity.getTextLineHeight() / 2;
         int m = this.currentRow * this.plaqueEntity.getTextLineHeight() - l;
         Matrix4f matrix4f = matrices.peek().getPositionMatrix();
 

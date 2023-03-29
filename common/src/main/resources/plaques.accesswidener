@@ -1,1 +1,3 @@
 accessWidener   v2  named
+accessible method net/minecraft/client/font/TextRenderer drawLayer (Lnet/minecraft/text/OrderedText;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/render/VertexConsumerProvider;ZII)F
+accessible field net/minecraft/client/font/TextRenderer FORWARD_SHIFT Lorg/joml/Vector3f;

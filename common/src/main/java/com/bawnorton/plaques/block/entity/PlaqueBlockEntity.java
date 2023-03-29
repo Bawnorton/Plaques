@@ -2,6 +2,7 @@ package com.bawnorton.plaques.block.entity;
 
 import com.bawnorton.plaques.Plaques;
 import com.bawnorton.plaques.block.PlaqueBlock;
+import com.bawnorton.plaques.util.PlaqueColour;
 import com.bawnorton.plaques.util.PlaqueType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.block.Block;
@@ -17,13 +18,14 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.*;
-import net.minecraft.util.DyeColor;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import java.util.function.Function;
 
 public class PlaqueBlockEntity extends BlockEntity {
@@ -37,7 +39,7 @@ public class PlaqueBlockEntity extends BlockEntity {
     @Nullable
     private OrderedText[] textsBeingEdited;
     private boolean filterText;
-    private DyeColor textColor;
+    private PlaqueColour textColor;
     private boolean glowingText;
 
     public PlaqueBlockEntity(BlockPos pos, BlockState state) {
@@ -45,7 +47,7 @@ public class PlaqueBlockEntity extends BlockEntity {
         this.texts = new ArrayList<>(){{for(int i = 0; i < getLineCount(); ++i) add(ScreenTexts.EMPTY);}};
         this.filteredTexts = new ArrayList<>(){{for(int i = 0; i < getLineCount(); ++i) add(ScreenTexts.EMPTY);}};
         this.editable = true;
-        this.textColor = DyeColor.BLACK;
+        this.textColor = PlaqueColour.NONE;
     }
 
     static {
@@ -59,7 +61,6 @@ public class PlaqueBlockEntity extends BlockEntity {
         return false;
     }
 
-    // server
     protected void writeNbt(NbtCompound nbt) {
         super.writeNbt(nbt);
         for(int i = 0; i < getLineCount(); ++i) {
@@ -79,7 +80,7 @@ public class PlaqueBlockEntity extends BlockEntity {
     public void readNbt(NbtCompound nbt) {
         this.editable = false;
         super.readNbt(nbt);
-        this.textColor = DyeColor.byName(nbt.getString("Color"), DyeColor.BLACK);
+        this.textColor = PlaqueColour.byName(nbt.getString("Color"), PlaqueColour.NONE);
 
         for(int i = 0; i < getLineCount(); ++i) {
             String string = nbt.getString(TEXT_KEYS[i]);
@@ -129,14 +130,13 @@ public class PlaqueBlockEntity extends BlockEntity {
         this.setTextOnRow(row, text, text);
     }
 
-    // client
     public void setTextOnRow(int row, Text text, Text filteredText) {
         this.texts.set(row, text);
         this.filteredTexts.set(row, filteredText);
         this.textsBeingEdited = null;
     }
 
-    public OrderedText[] updateSign(boolean filterText, Function<Text, OrderedText> textOrderingFunction) {
+    public OrderedText[] updatePlaque(boolean filterText, Function<Text, OrderedText> textOrderingFunction) {
         if (this.textsBeingEdited == null || this.filterText != filterText) {
             this.filterText = filterText;
             this.textsBeingEdited = new OrderedText[getLineCount()];
@@ -216,11 +216,11 @@ public class PlaqueBlockEntity extends BlockEntity {
         return new ServerCommandSource(CommandOutput.DUMMY, Vec3d.ofCenter(this.pos), Vec2f.ZERO, (ServerWorld)this.world, 2, string, text, this.world.getServer(), player);
     }
 
-    public DyeColor getTextColor() {
+    public PlaqueColour getTextColor() {
         return this.textColor;
     }
 
-    public boolean setTextColor(DyeColor value) {
+    public boolean setTextColor(PlaqueColour value) {
         if (value != this.getTextColor()) {
             this.textColor = value;
             this.updateListeners();
@@ -257,15 +257,37 @@ public class PlaqueBlockEntity extends BlockEntity {
         throw new IllegalStateException("PlaqueBlockEntity is not a PlaqueBlock");
     }
 
+    public String[] getText(boolean filtered) {
+        String[] strings = new String[getLineCount()];
+
+        for(int i = 0; i < getLineCount(); ++i) {
+            strings[i] = this.getTextOnRow(i, filtered).getString();
+        }
+
+        return strings;
+    }
+
+    public void setText(String[] text) {
+        for(int i = 0; i < getLineCount(); ++i) {
+            this.setTextOnRow(i, Text.literal(text[i]));
+        }
+    }
+
+    public void clearText() {
+        for(int i = 0; i < getLineCount(); ++i) {
+            this.setTextOnRow(i, ScreenTexts.EMPTY, ScreenTexts.EMPTY);
+        }
+    }
+
     public static int getLineCount() {
-        return 4;
+        return 3;
     }
 
     public int getMaxTextWidth() {
-        return 80;
+        return 55;
     }
 
     public int getTextLineHeight() {
-        return 15;
+        return 12;
     }
 }

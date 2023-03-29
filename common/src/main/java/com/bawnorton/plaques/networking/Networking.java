@@ -39,10 +39,10 @@ public class Networking {
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, UPDATE_PLAQUE, (packetByteBuf, packetContext) -> {
             List<String> text = new ArrayList<>();
             BlockPos pos = packetByteBuf.readBlockPos();
-            text.add(packetByteBuf.readString());
-            text.add(packetByteBuf.readString());
-            text.add(packetByteBuf.readString());
-            text.add(packetByteBuf.readString());
+            int size = packetByteBuf.readInt();
+            for(int i = 0; i < size; ++i) {
+                text.add(packetByteBuf.readString());
+            }
 
             ServerPlayerEntity player = (ServerPlayerEntity) packetContext.getPlayer();
             MinecraftServer server = player.getServer();

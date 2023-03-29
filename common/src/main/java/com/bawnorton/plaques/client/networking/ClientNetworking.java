@@ -28,13 +28,13 @@ public class ClientNetworking {
         });
     }
 
-    public static void updatePlaque(BlockPos pos, String line1, String line2, String line3, String line4) {
+    public static void updatePlaque(BlockPos pos, String[] lines) {
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
         buf.writeBlockPos(pos);
-        buf.writeString(line1);
-        buf.writeString(line2);
-        buf.writeString(line3);
-        buf.writeString(line4);
+        buf.writeInt(lines.length);
+        for(String line : lines) {
+            buf.writeString(line);
+        }
 
         NetworkManager.sendToServer(Networking.UPDATE_PLAQUE, buf);
     }
