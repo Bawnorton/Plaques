@@ -5,8 +5,16 @@ public abstract class ColourHelper {
         return mix(colour, 0x000000, amount);
     }
 
+    public static float darken(float colour, double amount) {
+        return (float) (colour * (1 - amount));
+    }
+
     public static int lighten(int colour, double amount) {
         return mix(colour, 0xFFFFFF, amount);
+    }
+
+    public static float lighten(float colour, double amount) {
+        return (float) (colour + (1 - colour) * amount);
     }
 
     public static int mix(int colour1, int colour2, double amount) {

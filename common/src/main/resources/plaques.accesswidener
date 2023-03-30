@@ -1,3 +1,9 @@
 accessWidener   v2  named
 accessible method net/minecraft/client/font/TextRenderer drawLayer (Lnet/minecraft/text/OrderedText;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/render/VertexConsumerProvider;Lnet/minecraft/client/font/TextRenderer$TextLayerType;II)F
+accessible method net/minecraft/client/font/TextRenderer getFontStorage (Lnet/minecraft/util/Identifier;)Lnet/minecraft/client/font/FontStorage;
+accessible method net/minecraft/client/font/TextRenderer drawGlyph (Lnet/minecraft/client/font/GlyphRenderer;ZZFFFLorg/joml/Matrix4f;Lnet/minecraft/client/render/VertexConsumer;FFFFI)V
 accessible field net/minecraft/client/font/TextRenderer FORWARD_SHIFT Lorg/joml/Vector3f;
+accessible field net/minecraft/client/font/TextRenderer validateAdvance Z
+accessible field net/minecraft/client/font/GlyphRenderer$Rectangle red F
+accessible field net/minecraft/client/font/GlyphRenderer$Rectangle blue F
+accessible field net/minecraft/client/font/GlyphRenderer$Rectangle green F

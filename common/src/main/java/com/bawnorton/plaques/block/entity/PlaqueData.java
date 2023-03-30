@@ -1,6 +1,6 @@
 package com.bawnorton.plaques.block.entity;
 
-import com.bawnorton.plaques.util.PlaqueColour;
+import com.bawnorton.plaques.util.PlaqueAccents;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.screen.ScreenTexts;
@@ -37,14 +37,14 @@ public class PlaqueData {
     @Nullable
     private OrderedText[] textsBeingEdited;
     private boolean filterText;
-    private PlaqueColour textColour;
+    private PlaqueAccents textColour;
     private boolean glowingText;
 
     public PlaqueData() {
         this.texts = new ArrayList<>(){{for(int i = 0; i < LINE_COUNT; ++i) add(ScreenTexts.EMPTY);}};
         this.filteredTexts = new ArrayList<>(){{for(int i = 0; i < LINE_COUNT; ++i) add(ScreenTexts.EMPTY);}};
         this.editable = true;
-        this.textColour = PlaqueColour.NONE;
+        this.textColour = PlaqueAccents.NONE;
     }
 
     static {
@@ -70,7 +70,7 @@ public class PlaqueData {
     }
 
     public void readNbt(NbtCompound nbt, World world, BlockPos pos) {
-        this.textColour = PlaqueColour.byName(nbt.getString("Color"), PlaqueColour.NONE);
+        this.textColour = PlaqueAccents.byName(nbt.getString("Color"), PlaqueAccents.NONE);
 
         for(int i = 0; i < LINE_COUNT; ++i) {
             String string = nbt.getString(TEXT_KEYS[i]);
@@ -160,20 +160,28 @@ public class PlaqueData {
         this.filterText = filterText;
     }
 
-    public PlaqueColour getTextColour() {
+    public PlaqueAccents getTextColour() {
         return this.textColour;
     }
 
-    public void setTextColour(PlaqueColour textColour) {
+    public boolean setTextColour(PlaqueAccents textColour) {
+        if (getTextColour() == textColour) {
+            return false;
+        }
         this.textColour = textColour;
+        return true;
     }
 
     public boolean isGlowingText() {
         return this.glowingText;
     }
 
-    public void setGlowingText(boolean glowingText) {
+    public boolean setGlowingText(boolean glowingText) {
+        if (isGlowingText() == glowingText) {
+            return false;
+        }
         this.glowingText = glowingText;
+        return true;
     }
 
     public static int getLineCount() {

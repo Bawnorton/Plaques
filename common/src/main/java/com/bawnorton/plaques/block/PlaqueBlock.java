@@ -1,6 +1,7 @@
 package com.bawnorton.plaques.block;
 
 import com.bawnorton.plaques.block.entity.PlaqueBlockEntity;
+import com.bawnorton.plaques.util.PlaqueAccents;
 import com.bawnorton.plaques.util.PlaqueType;
 import net.minecraft.advancement.criterion.Criteria;
 import net.minecraft.block.*;
@@ -24,18 +25,6 @@ import net.minecraft.world.World;
 import java.util.List;
 
 public class PlaqueBlock extends WallSignBlock {
-    private static final List<Item> ACCENTS = List.of(
-            Items.IRON_INGOT,
-            Items.GOLD_INGOT,
-            Items.NETHERITE_INGOT,
-            Items.COPPER_INGOT,
-            Items.DIAMOND,
-            Items.EMERALD,
-            Items.LAPIS_LAZULI,
-            Items.REDSTONE,
-            Items.QUARTZ
-    );
-
     private static final VoxelShape SHAPE_N = Block.createCuboidShape(0, 2, 14, 16, 14, 16);
     private static final VoxelShape SHAPE_E = Block.createCuboidShape(0, 2, 0, 2, 14, 16);
     private static final VoxelShape SHAPE_W = Block.createCuboidShape(14, 2, 0, 16, 14, 16);
@@ -58,7 +47,7 @@ public class PlaqueBlock extends WallSignBlock {
         Item item = itemStack.getItem();
         boolean isGlowstone = item == Items.GLOWSTONE_DUST;
         boolean isCoal = item == Items.COAL;
-        boolean canInteract = (isGlowstone || isCoal || ACCENTS.contains(item)) && player.getAbilities().allowModifyWorld;
+        boolean canInteract = (isGlowstone || isCoal || PlaqueAccents.hasAccent(item)) && player.getAbilities().allowModifyWorld;
 
         BlockEntity blockEntity = world.getBlockEntity(pos);
         if(!(blockEntity instanceof PlaqueBlockEntity plaqueBlockEntity)) return ActionResult.PASS;

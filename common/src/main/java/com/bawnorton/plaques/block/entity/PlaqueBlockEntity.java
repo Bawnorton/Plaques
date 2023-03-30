@@ -2,7 +2,7 @@ package com.bawnorton.plaques.block.entity;
 
 import com.bawnorton.plaques.Plaques;
 import com.bawnorton.plaques.block.PlaqueBlock;
-import com.bawnorton.plaques.util.PlaqueColour;
+import com.bawnorton.plaques.util.PlaqueAccents;
 import com.bawnorton.plaques.util.PlaqueType;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -41,6 +41,9 @@ public class PlaqueBlockEntity extends BlockEntity {
     }
 
     public boolean setAccent(Item item) {
+        if (PlaqueAccents.hasAccent(item)) {
+            return this.setTextColour(PlaqueAccents.byItem(item));
+        }
         return false;
     }
 
@@ -147,15 +150,14 @@ public class PlaqueBlockEntity extends BlockEntity {
         return new ServerCommandSource(CommandOutput.DUMMY, Vec3d.ofCenter(this.pos), Vec2f.ZERO, (ServerWorld) this.world, 2, string, text, this.world.getServer(), player);
     }
 
-    public PlaqueColour getTextColour() {
+    public PlaqueAccents getTextColour() {
         return data.getTextColour();
     }
 
-    public boolean setTextColor(PlaqueColour value) {
-        if (value == this.getTextColour()) return false;
-        data.setTextColour(value);
-        this.updateListeners();
-        return true;
+    public boolean setTextColour(PlaqueAccents value) {
+        boolean result = data.setTextColour(value);
+        if (result) this.updateListeners();
+        return result;
     }
 
     public boolean isGlowingText() {
@@ -163,10 +165,9 @@ public class PlaqueBlockEntity extends BlockEntity {
     }
 
     public boolean setGlowingText(boolean glowingText) {
-        if (glowingText == this.isGlowingText()) return false;
-        this.data.setGlowingText(glowingText);
-        this.updateListeners();
-        return true;
+        boolean result = this.data.setGlowingText(glowingText);
+        if (result) this.updateListeners();
+        return result;
     }
 
     private void updateListeners() {

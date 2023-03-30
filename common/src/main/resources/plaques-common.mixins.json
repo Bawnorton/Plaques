@@ -5,7 +5,11 @@
   "compatibilityLevel": "JAVA_17",
   "client": [
     "client.FontManagerAccessor",
-    "client.MinecraftClientMixin"
+    "client.MinecraftClientMixin",
+    "client.RenderLayerInvoker",
+    "client.RenderLayerInvoker$MultiPhaseInvoker",
+    "client.RenderLayersMixin",
+    "client.RenderPhaseMixin"
   ],
   "mixins": [
     "MinecraftServerMixin"

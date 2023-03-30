@@ -3,7 +3,7 @@ package com.bawnorton.plaques.client.render;
 import com.bawnorton.plaques.block.entity.PlaqueBlockEntity;
 import com.bawnorton.plaques.client.PlaquesClient;
 import com.bawnorton.plaques.util.ColourHelper;
-import com.bawnorton.plaques.util.PlaqueColour;
+import com.bawnorton.plaques.util.PlaqueAccents;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.WallSignBlock;
 import net.minecraft.client.MinecraftClient;
@@ -12,7 +12,6 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
-import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.text.OrderedText;
@@ -60,21 +59,14 @@ public class PlaqueBlockEntityRenderer implements BlockEntityRenderer<PlaqueBloc
         });
 
         int textColour = blockEntity.getTextColour().getColour();
-        int engravingColour;
-        if(blockEntity.getTextColour().equals(PlaqueColour.NONE)) {
-            engravingColour = ColourHelper.darken(blockEntity.getPlaqueType().getColourMap(), blockEntity.isGlowingText() ? 0.5f : 0.85f);
-        } else {
-            engravingColour = textColour;
-        }
+        int engravingColour = ColourHelper.darken(blockEntity.getPlaqueType().getColourMap(), blockEntity.isGlowingText() ? 0.5f : 0.85f);
+        boolean shouldEngrave = blockEntity.getTextColour().equals(PlaqueAccents.NONE);
 
         boolean shouldGlow;
-        int plaqueLight;
         if (blockEntity.isGlowingText()) {
             shouldGlow = shouldGlow(blockEntity, textColour);
-            plaqueLight = 15728880;
         } else {
             shouldGlow = false;
-            plaqueLight = light;
         }
 
         int xOffset = (blockEntity.getMaxTextWidth() / 2 + 5) * 0;
@@ -85,18 +77,16 @@ public class PlaqueBlockEntityRenderer implements BlockEntityRenderer<PlaqueBloc
         for(int line = 0; line < PlaqueBlockEntity.getLineCount(); ++line) {
             OrderedText orderedText = orderedTexts[line];
             float textWidth = (float)(-this.textRenderer.getWidth(orderedText) / 2) + xOffset;
-            if (shouldGlow) {
-                this.textRenderer.draw(orderedText, textWidth, (float)(line * blockEntity.getTextLineHeight() - lineOffset), engravingColour, false, positionMatrix, verticesProvider, TextRenderer.TextLayerType.NORMAL, 0, plaqueLight);
-                // glow effect
-                float offset = 0.2f;
-                positionMatrix.translate(0, 0, -0.15f);
-                this.textRenderer.draw(orderedText, textWidth + offset, (float)(line * blockEntity.getTextLineHeight() - lineOffset) + offset, 0xFFEECC, false, positionMatrix, verticesProvider, TextRenderer.TextLayerType.NORMAL, 0, plaqueLight);
-                this.textRenderer.draw(orderedText, textWidth - offset, (float)(line * blockEntity.getTextLineHeight() - lineOffset) - offset, 0xFFEECC, false, positionMatrix, verticesProvider, TextRenderer.TextLayerType.NORMAL, 0, plaqueLight);
-                this.textRenderer.draw(orderedText, textWidth + offset, (float)(line * blockEntity.getTextLineHeight() - lineOffset) - offset, 0xFFEECC, false, positionMatrix, verticesProvider, TextRenderer.TextLayerType.NORMAL, 0, plaqueLight);
-                this.textRenderer.draw(orderedText, textWidth - offset, (float)(line * blockEntity.getTextLineHeight() - lineOffset) + offset, 0xFFEECC, false, positionMatrix, verticesProvider, TextRenderer.TextLayerType.NORMAL, 0, plaqueLight);
-                positionMatrix.translate(0, 0, 0.15f);
+            if (shouldGlow && shouldEngrave) {
+                this.textRenderer.draw(orderedText, textWidth, (float)(line * blockEntity.getTextLineHeight() - lineOffset), engravingColour, false, positionMatrix, verticesProvider, TextRenderer.TextLayerType.NORMAL, 0, 15728880);
+                PlaquesClient.plaqueTextRenderer.drawGlow(orderedText, textWidth, line * blockEntity.getTextLineHeight() - lineOffset, 0.3f, ColourHelper.lighten(engravingColour, 0.2), positionMatrix, verticesProvider, light);
+            } else if (shouldGlow) {
+                PlaquesClient.plaqueTextRenderer.drawVariatingText(orderedText, textWidth, line * blockEntity.getTextLineHeight() - lineOffset, textColour, positionMatrix, verticesProvider, TextRenderer.TextLayerType.NORMAL, 0, 15728880);
+                PlaquesClient.plaqueTextRenderer.drawGlow(orderedText, textWidth, line * blockEntity.getTextLineHeight() - lineOffset, 0.3f, ColourHelper.lighten(textColour, 0.2), positionMatrix, verticesProvider, light);
+            } else if (shouldEngrave) {
+                PlaquesClient.plaqueTextRenderer.drawEngravedText(orderedText, textWidth, line * blockEntity.getTextLineHeight() - lineOffset, engravingColour, positionMatrix, verticesProvider, TextRenderer.TextLayerType.NORMAL, 0, light);
             } else {
-                PlaquesClient.engravedTextRenderer.drawEngravedText(orderedText, textWidth, line * blockEntity.getTextLineHeight() - lineOffset, engravingColour, positionMatrix, verticesProvider, TextRenderer.TextLayerType.NORMAL, 0, plaqueLight);
+                PlaquesClient.plaqueTextRenderer.drawVariatingText(orderedText, textWidth, (float)(line * blockEntity.getTextLineHeight() - lineOffset), textColour, positionMatrix, verticesProvider, TextRenderer.TextLayerType.NORMAL, 0, light);
             }
         }
     }
@@ -106,7 +96,7 @@ public class PlaqueBlockEntityRenderer implements BlockEntityRenderer<PlaqueBloc
     }
 
     private static boolean shouldGlow(PlaqueBlockEntity plaqueEntity, int plaqueColour) {
-        if (plaqueColour == PlaqueColour.NONE.getColour()) {
+        if (plaqueColour == PlaqueAccents.NONE.getColour()) {
             return true;
         } else {
             MinecraftClient minecraftClient = MinecraftClient.getInstance();
