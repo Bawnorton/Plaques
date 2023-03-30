@@ -4,18 +4,17 @@ import com.bawnorton.plaques.block.entity.PlaqueBlockEntity;
 import com.bawnorton.plaques.client.networking.ClientNetworking;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.block.WallSignBlock;
-import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.SelectionManager;
+import net.minecraft.client.util.Window;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
-import net.minecraft.util.Pair;
-import net.minecraft.util.math.Direction;
+import net.minecraft.util.Identifier;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -23,9 +22,9 @@ import org.joml.Vector3f;
 public class PlaqueScreen extends Screen {
     private final PlaqueBlockEntity plaqueEntity;
     private final String[] text;
+    private final int numPlaques;
     private int ticksSinceOpened;
     private int currentRow;
-    private int numPlaques;
     private SelectionManager selectionManager;
 
     private static final Vector3f TEXT_SCALE = new Vector3f(0.9765628F, 0.9765628F, 0.9765628F);
@@ -33,27 +32,11 @@ public class PlaqueScreen extends Screen {
     public PlaqueScreen(PlaqueBlockEntity plaqueEntity, boolean filtered) {
         super(Text.translatable("plaques.edit"));
         this.plaqueEntity = plaqueEntity;
-        Direction direction = plaqueEntity.getCachedState().get(WallSignBlock.FACING);
-        Direction right = direction.rotateYClockwise();
-        Pair<Integer, String[]> depthAndText = getActualText(plaqueEntity.getText(filtered), filtered, plaqueEntity, plaqueEntity, right, 1);
-        this.text = depthAndText.getRight();
-        this.numPlaques = depthAndText.getLeft();
+        this.numPlaques = 1;
+        this.text = this.plaqueEntity.getText(filtered);
 
-        super.init(MinecraftClient.getInstance(), MinecraftClient.getInstance().getWindow().getScaledWidth(), MinecraftClient.getInstance().getWindow().getScaledHeight());
-    }
-
-    private Pair<Integer, String[]> getActualText(String[] text, boolean filtered, PlaqueBlockEntity leftMost, PlaqueBlockEntity rightPlaque, Direction right, int depth) {
-        if(rightPlaque.getPlaqueType().equals(leftMost.getPlaqueType())) {
-            String[] rightText = rightPlaque.getText(filtered);
-            for(int i = 0; i < rightText.length; i++) {
-                text[i] += rightText[i];
-            }
-            BlockEntity nextRight = leftMost.getWorld().getBlockEntity(rightPlaque.getPos().offset(right));
-            if(nextRight instanceof PlaqueBlockEntity nextRightPlaque) {
-                return getActualText(text, filtered, leftMost, nextRightPlaque, right,depth + 1);
-            }
-        }
-        return new Pair<>(depth, text);
+        client = MinecraftClient.getInstance();
+        super.init(client, client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
     }
 
     @Override
@@ -119,8 +102,14 @@ public class PlaqueScreen extends Screen {
         super.render(matrices, mouseX, mouseY, delta);
     }
 
-    private void renderPlaqueBackground(MatrixStack matrices, VertexConsumerProvider.Immediate vertexConsumers) {
-        // TODO: Implement this
+    private void renderPlaqueBackground(MatrixStack matrices, VertexConsumerProvider.Immediate vertexConsumers, BlockState state) {
+        Identifier texture = plaqueEntity.getPlaqueType().getTexture();
+        RenderSystem.setShader(GameRenderer::getPositionTexProgram);
+        RenderSystem.setShaderColor(1, 1, 1, 1);
+        RenderSystem.setShaderTexture(0, texture);
+        Window window = MinecraftClient.getInstance().getWindow();
+        int width = window.getScaledWidth();
+        drawTexture(matrices, width / 2 - 32, 62, 0, 0,64, 56, 64, 56);
     }
 
     private Vector3f getTextScale() {
@@ -133,11 +122,9 @@ public class PlaqueScreen extends Screen {
 
     private void renderPlaque(MatrixStack matrices) {
         VertexConsumerProvider.Immediate immediate = this.client.getBufferBuilders().getEntityVertexConsumers();
+        this.renderPlaqueBackground(matrices, immediate, this.plaqueEntity.getCachedState());
         matrices.push();
         this.translateForRender(matrices);
-        matrices.push();
-        this.renderPlaqueBackground(matrices, immediate);
-        matrices.pop();
         this.renderPlaqueText(matrices, immediate);
         matrices.pop();
     }
@@ -146,7 +133,7 @@ public class PlaqueScreen extends Screen {
         matrices.translate(0.0F, 0.0F, 4.0F);
         Vector3f vector3f = this.getTextScale();
         matrices.scale(vector3f.x(), vector3f.y(), vector3f.z());
-        int i = this.plaqueEntity.getTextColor().getColour();
+        int i = this.plaqueEntity.getTextColour().getColour();
         boolean bl = this.ticksSinceOpened / 6 % 2 == 0;
         int j = this.selectionManager.getSelectionStart();
         int k = this.selectionManager.getSelectionEnd();

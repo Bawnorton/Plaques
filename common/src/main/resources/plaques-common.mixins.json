@@ -8,6 +8,7 @@
     "client.MinecraftClientMixin"
   ],
   "mixins": [
+    "MinecraftServerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

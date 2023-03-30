@@ -1,8 +1,8 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"1": "minecraft:block/red_sandstone_top",
-		"particle": "minecraft:block/red_sandstone_top"
+		"1": "plaques:block/red_sandstone",
+		"particle": "plaques:block/red_sandstone"
 	},
 	"elements": [
 		{

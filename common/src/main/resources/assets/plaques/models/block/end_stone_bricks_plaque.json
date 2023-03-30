@@ -1,8 +1,8 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"1": "minecraft:block/bricks",
-		"particle": "minecraft:block/bricks"
+		"1": "plaques:block/end_stone_bricks",
+		"particle": "plaques:block/end_stone_bricks"
 	},
 	"elements": [
 		{

@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "plaques:item/mossy_stone_brick_plaque"
+    "layer0": "plaques:item/mossy_stone_bricks_plaque"
   }
 }

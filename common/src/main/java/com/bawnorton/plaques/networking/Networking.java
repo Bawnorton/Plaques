@@ -25,6 +25,8 @@ import java.util.function.BiFunction;
 public class Networking {
     public static final Identifier UPDATE_PLAQUE = Plaques.id("update_plaque");
     public static final Identifier OPEN_PLAQUE_SCREEN = Plaques.id("open_plaque_screen");
+    public static final Object SERVER_LOCK = new Object();
+    public static MinecraftServer server;
 
     public static void sendOpenPlaqueScreen(ServerPlayerEntity player, PlaqueBlockEntity plaque) {
         plaque.setEditor(player.getUuid());
@@ -86,5 +88,16 @@ public class Networking {
 
     private static <T, R> CompletableFuture<R> filterText(T text, ServerPlayerEntity player, BiFunction<TextStream, T, CompletableFuture<R>> filterer) {
         return filterer.apply(player.getTextStream(), text).thenApply((filtered) -> filtered);
+    }
+
+    public static void onServerInit(ServerRunnable serverAccess) {
+        synchronized (SERVER_LOCK) {
+            serverAccess.run(server);
+        }
+    }
+
+    @FunctionalInterface
+    public interface ServerRunnable {
+        void run(MinecraftServer server);
     }
 }

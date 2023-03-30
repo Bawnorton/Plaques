@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "plaques:item/prismarine_plaque"
+    "layer0": "plaques:item/end_stone_bricks_plaque"
   }
 }

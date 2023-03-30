@@ -59,21 +59,14 @@ public class PlaqueBlock extends WallSignBlock {
         Item item = itemStack.getItem();
         boolean isGlowstone = item == Items.GLOWSTONE_DUST;
         boolean isCoal = item == Items.COAL;
-        boolean isAccent = ACCENTS.contains(item);
-        boolean canInteract = (isGlowstone || isCoal || isAccent) && player.getAbilities().allowModifyWorld;
-        if(world.isClient) {
-            return canInteract ? ActionResult.SUCCESS : ActionResult.CONSUME;
-        }
+        boolean canInteract = (isGlowstone || isCoal || ACCENTS.contains(item)) && player.getAbilities().allowModifyWorld;
 
         BlockEntity blockEntity = world.getBlockEntity(pos);
-        if(!(blockEntity instanceof PlaqueBlockEntity plaqueBlockEntity)) {
-            return ActionResult.PASS;
-        }
+        if(!(blockEntity instanceof PlaqueBlockEntity plaqueBlockEntity)) return ActionResult.PASS;
+        if(world.isClient) return canInteract ? ActionResult.SUCCESS : ActionResult.CONSUME;
 
         boolean isGlowing = plaqueBlockEntity.isGlowingText();
-        if(isGlowing && isGlowstone || !isGlowing && isCoal) {
-            return ActionResult.PASS;
-        }
+        if(isGlowing && isGlowstone || !isGlowing && isCoal) return ActionResult.PASS;
 
         if(canInteract) {
             boolean usedItem;

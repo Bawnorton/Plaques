@@ -4,10 +4,8 @@ import com.bawnorton.plaques.block.entity.PlaqueBlockEntity;
 import com.bawnorton.plaques.client.PlaquesClient;
 import com.bawnorton.plaques.util.ColourHelper;
 import com.bawnorton.plaques.util.PlaqueColour;
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.WallSignBlock;
-import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -18,8 +16,9 @@ import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.text.OrderedText;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.*;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RotationAxis;
+import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 
 import java.util.List;
@@ -46,46 +45,8 @@ public class PlaqueBlockEntityRenderer implements BlockEntityRenderer<PlaqueBloc
         matrices.pop();
     }
 
-    private int resolveRightPlaques(PlaqueBlockEntity leftMost, PlaqueBlockEntity rightPlaque, Direction right, int depth) {
-        if(rightPlaque.getPlaqueType().equals(leftMost.getPlaqueType())) {
-            boolean filter = MinecraftClient.getInstance().shouldFilterText();
-            String[] leftText = leftMost.getText(filter);
-            String[] rightText = rightPlaque.getText(filter);
-            String[] newText = new String[leftText.length];
-            for(int i = 0; i < leftText.length; i++) {
-                newText[i] = leftText[i] + rightText[i];
-            }
-            leftMost.setText(newText);
-            rightPlaque.clearText();
-            BlockEntity nextRight = leftMost.getWorld().getBlockEntity(rightPlaque.getPos().offset(right));
-            if(nextRight instanceof PlaqueBlockEntity nextRightPlaque) {
-                return resolveRightPlaques(leftMost, nextRightPlaque, right,depth + 1);
-            }
-        }
-        return depth;
-    }
-
     private void renderText(PlaqueBlockEntity blockEntity, MatrixStack matrices, VertexConsumerProvider verticesProvider, int light) {
         if(blockEntity.getWorld() == null) return;
-
-        BlockPos blockPos = blockEntity.getPos();
-        Direction direction = blockEntity.getCachedState().get(WallSignBlock.FACING);
-        Direction left = direction.rotateYCounterclockwise();
-        BlockEntity leftBlock = blockEntity.getWorld().getBlockEntity(blockPos.offset(left));
-        if(leftBlock instanceof PlaqueBlockEntity leftPlaqueBlockEntity) {
-            if (blockEntity.getPlaqueType().equals(leftPlaqueBlockEntity.getPlaqueType())) {
-                return;
-            }
-        }
-
-        Direction right = direction.rotateYClockwise();
-        BlockEntity rightBlock = blockEntity.getWorld().getBlockEntity(blockPos.offset(right));
-        int numRightPlaques = 0;
-        if(rightBlock instanceof PlaqueBlockEntity rightPlaqueBlockEntity) {
-            numRightPlaques = resolveRightPlaques(blockEntity, rightPlaqueBlockEntity, right, 1);
-        }
-
-        int xOffset = (- blockEntity.getMaxTextWidth() / 2 - 5) * numRightPlaques;
 
         float scale = 0.015625F * (float) 0.666667;
         Vec3d vec3d = this.getTextOffset();
@@ -93,13 +54,13 @@ public class PlaqueBlockEntityRenderer implements BlockEntityRenderer<PlaqueBloc
         matrices.scale(scale, -scale, scale);
         int lineOffset = (PlaqueBlockEntity.getLineCount() - 1) * blockEntity.getTextLineHeight() / 2;
         OrderedText[] orderedTexts = blockEntity.updatePlaque(MinecraftClient.getInstance().shouldFilterText(), (text) -> {
-            List<OrderedText> list = this.textRenderer.wrapLines(text, blockEntity.getMaxTextWidth());
+            List<OrderedText> list = this.textRenderer.wrapLines(text, blockEntity.getMaxTextWidth() * (0 + 1));
             return list.isEmpty() ? OrderedText.EMPTY : list.get(0);
         });
 
-        int textColour = blockEntity.getTextColor().getColour();
+        int textColour = blockEntity.getTextColour().getColour();
         int engravingColour;
-        if(blockEntity.getTextColor().equals(PlaqueColour.NONE)) {
+        if(blockEntity.getTextColour().equals(PlaqueColour.NONE)) {
             engravingColour = ColourHelper.darken(blockEntity.getPlaqueType().getColourMap(), blockEntity.isGlowingText() ? 0.5f : 0.85f);
         } else {
             engravingColour = textColour;
@@ -115,10 +76,11 @@ public class PlaqueBlockEntityRenderer implements BlockEntityRenderer<PlaqueBloc
             plaqueLight = light;
         }
 
+        int xOffset = (blockEntity.getMaxTextWidth() / 2 + 5) * 0;
 
         Matrix4f positionMatrix = matrices.peek().getPositionMatrix();
         positionMatrix.scale(1.5f, 1.5f, 1f);
-        positionMatrix.translate(0, -3f, 0);
+        positionMatrix.translate(0, -2.7f, 0);
         for(int line = 0; line < PlaqueBlockEntity.getLineCount(); ++line) {
             OrderedText orderedText = orderedTexts[line];
             float textWidth = (float)(-this.textRenderer.getWidth(orderedText) / 2) + xOffset;
@@ -158,7 +120,7 @@ public class PlaqueBlockEntityRenderer implements BlockEntityRenderer<PlaqueBloc
     }
 
     private static int getColour(PlaqueBlockEntity entity) {
-        int[] colourArray = entity.getTextColor().getColourArray();
+        int[] colourArray = entity.getTextColour().getColourArray();
         return ColourHelper.darken(NativeImage.packColor(0, colourArray[2], colourArray[1], colourArray[0]), 0.4);
     }
 }

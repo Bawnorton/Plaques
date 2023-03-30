@@ -1,8 +1,8 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"1": "minecraft:block/polished_andesite",
-		"particle": "minecraft:block/polished_andesite"
+		"1": "plaques:block/polished_andesite",
+		"particle": "plaques:block/polished_andesite"
 	},
 	"elements": [
 		{

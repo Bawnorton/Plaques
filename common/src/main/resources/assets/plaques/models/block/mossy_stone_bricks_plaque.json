@@ -1,8 +1,8 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"1": "minecraft:block/prismarine",
-		"particle": "minecraft:block/prismarine"
+		"1": "plaques:block/mossy_stone_bricks",
+		"particle": "plaques:block/mossy_stone_bricks"
 	},
 	"elements": [
 		{
