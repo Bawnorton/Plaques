@@ -16,6 +16,7 @@ import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.text.OrderedText;
+import net.minecraft.util.math.ColorHelper;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
@@ -85,17 +86,17 @@ public class PlaqueBlockEntityRenderer implements BlockEntityRenderer<PlaqueBloc
             OrderedText orderedText = orderedTexts[line];
             float textWidth = (float)(-this.textRenderer.getWidth(orderedText) / 2) + xOffset;
             if (shouldGlow) {
-                this.textRenderer.draw(orderedText, textWidth, (float)(line * blockEntity.getTextLineHeight() - lineOffset), engravingColour, false, positionMatrix, verticesProvider, false, 0, plaqueLight);
+                this.textRenderer.draw(orderedText, textWidth, (float)(line * blockEntity.getTextLineHeight() - lineOffset), engravingColour, false, positionMatrix, verticesProvider, TextRenderer.TextLayerType.NORMAL, 0, plaqueLight);
                 // glow effect
                 float offset = 0.2f;
-                positionMatrix.translate(0, 0, -0.05f);
-                this.textRenderer.draw(orderedText, textWidth + offset, (float)(line * blockEntity.getTextLineHeight() - lineOffset) + offset, 0xFFEECC, false, positionMatrix, verticesProvider, false, 0, plaqueLight);
-                this.textRenderer.draw(orderedText, textWidth - offset, (float)(line * blockEntity.getTextLineHeight() - lineOffset) - offset, 0xFFEECC, false, positionMatrix, verticesProvider, false, 0, plaqueLight);
-                this.textRenderer.draw(orderedText, textWidth + offset, (float)(line * blockEntity.getTextLineHeight() - lineOffset) - offset, 0xFFEECC, false, positionMatrix, verticesProvider, false, 0, plaqueLight);
-                this.textRenderer.draw(orderedText, textWidth - offset, (float)(line * blockEntity.getTextLineHeight() - lineOffset) + offset, 0xFFEECC, false, positionMatrix, verticesProvider, false, 0, plaqueLight);
-                positionMatrix.translate(0, 0, 0.05f);
+                positionMatrix.translate(0, 0, -0.15f);
+                this.textRenderer.draw(orderedText, textWidth + offset, (float)(line * blockEntity.getTextLineHeight() - lineOffset) + offset, 0xFFEECC, false, positionMatrix, verticesProvider, TextRenderer.TextLayerType.NORMAL, 0, plaqueLight);
+                this.textRenderer.draw(orderedText, textWidth - offset, (float)(line * blockEntity.getTextLineHeight() - lineOffset) - offset, 0xFFEECC, false, positionMatrix, verticesProvider, TextRenderer.TextLayerType.NORMAL, 0, plaqueLight);
+                this.textRenderer.draw(orderedText, textWidth + offset, (float)(line * blockEntity.getTextLineHeight() - lineOffset) - offset, 0xFFEECC, false, positionMatrix, verticesProvider, TextRenderer.TextLayerType.NORMAL, 0, plaqueLight);
+                this.textRenderer.draw(orderedText, textWidth - offset, (float)(line * blockEntity.getTextLineHeight() - lineOffset) + offset, 0xFFEECC, false, positionMatrix, verticesProvider, TextRenderer.TextLayerType.NORMAL, 0, plaqueLight);
+                positionMatrix.translate(0, 0, 0.15f);
             } else {
-                PlaquesClient.engravedTextRenderer.drawEngravedText(orderedText, textWidth, line * blockEntity.getTextLineHeight() - lineOffset, engravingColour, positionMatrix, verticesProvider, false, 0, plaqueLight);
+                PlaquesClient.engravedTextRenderer.drawEngravedText(orderedText, textWidth, line * blockEntity.getTextLineHeight() - lineOffset, engravingColour, positionMatrix, verticesProvider, TextRenderer.TextLayerType.NORMAL, 0, plaqueLight);
             }
         }
     }
@@ -121,6 +122,6 @@ public class PlaqueBlockEntityRenderer implements BlockEntityRenderer<PlaqueBloc
 
     private static int getColour(PlaqueBlockEntity entity) {
         int[] colourArray = entity.getTextColour().getColourArray();
-        return ColourHelper.darken(NativeImage.packColor(0, colourArray[2], colourArray[1], colourArray[0]), 0.4);
+        return ColourHelper.darken(ColorHelper.Argb.getArgb(0, colourArray[0], colourArray[1], colourArray[2]), 0.4);
     }
 }

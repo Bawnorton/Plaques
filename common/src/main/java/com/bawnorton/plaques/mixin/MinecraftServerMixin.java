@@ -15,7 +15,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.net.Proxy;
 
-@SuppressWarnings("DataFlowIssue") // not sure why this warning is here, should be overriden by the MinecraftModDev plugin
 @Mixin(MinecraftServer.class)
 public abstract class MinecraftServerMixin {
     @Inject(method = "<init>", at = @At("RETURN"))

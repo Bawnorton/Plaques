@@ -4,11 +4,13 @@ import com.bawnorton.plaques.block.entity.PlaqueBlockEntity;
 import com.bawnorton.plaques.client.networking.ClientNetworking;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.render.*;
+import net.minecraft.client.render.DiffuseLighting;
+import net.minecraft.client.render.GameRenderer;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.SelectionManager;
 import net.minecraft.client.util.Window;
 import net.minecraft.client.util.math.MatrixStack;
@@ -96,13 +98,13 @@ public class PlaqueScreen extends Screen {
     public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
         DiffuseLighting.disableGuiDepthLighting();
         this.renderBackground(matrices);
-        drawCenteredText(matrices, this.textRenderer, this.title, this.width / 2, 40, 16777215);
+        drawCenteredTextWithShadow(matrices, this.textRenderer, this.title, this.width / 2, 40, 16777215);
         this.renderPlaque(matrices);
         DiffuseLighting.enableGuiDepthLighting();
         super.render(matrices, mouseX, mouseY, delta);
     }
 
-    private void renderPlaqueBackground(MatrixStack matrices, VertexConsumerProvider.Immediate vertexConsumers, BlockState state) {
+    private void renderPlaqueBackground(MatrixStack matrices) {
         Identifier texture = plaqueEntity.getPlaqueType().getTexture();
         RenderSystem.setShader(GameRenderer::getPositionTexProgram);
         RenderSystem.setShaderColor(1, 1, 1, 1);
@@ -122,7 +124,7 @@ public class PlaqueScreen extends Screen {
 
     private void renderPlaque(MatrixStack matrices) {
         VertexConsumerProvider.Immediate immediate = this.client.getBufferBuilders().getEntityVertexConsumers();
-        this.renderPlaqueBackground(matrices, immediate, this.plaqueEntity.getCachedState());
+        this.renderPlaqueBackground(matrices);
         matrices.push();
         this.translateForRender(matrices);
         this.renderPlaqueText(matrices, immediate);
@@ -137,7 +139,7 @@ public class PlaqueScreen extends Screen {
         boolean bl = this.ticksSinceOpened / 6 % 2 == 0;
         int j = this.selectionManager.getSelectionStart();
         int k = this.selectionManager.getSelectionEnd();
-        int l = PlaqueBlockEntity.getLineCount() * this.plaqueEntity.getTextLineHeight() / 2;
+        int l = 4 * this.plaqueEntity.getTextLineHeight() / 2;
         int m = this.currentRow * this.plaqueEntity.getTextLineHeight() - l;
         Matrix4f matrix4f = matrices.peek().getPositionMatrix();
 
@@ -153,12 +155,12 @@ public class PlaqueScreen extends Screen {
                 }
 
                 float f = (float)(-this.client.textRenderer.getWidth(string) / 2);
-                this.client.textRenderer.draw(string, f, (float)(n * this.plaqueEntity.getTextLineHeight() - l), i, false, matrix4f, vertexConsumers, false, 0, 15728880, false);
+                this.client.textRenderer.draw(string, f, (float)(n * this.plaqueEntity.getTextLineHeight() - l), i, false, matrix4f, vertexConsumers, TextRenderer.TextLayerType.NORMAL, 0, 15728880, false);
                 if (n == this.currentRow && j >= 0 && bl) {
-                    o = this.client.textRenderer.getWidth(string.substring(0, Math.min(j, string.length())));
+                    o = this.client.textRenderer.getWidth(string.substring(0, Math.max(Math.min(j, string.length()), 0)));
                     p = o - this.client.textRenderer.getWidth(string) / 2;
                     if (j >= string.length()) {
-                        this.client.textRenderer.draw("_", (float)p, (float)m, i, false, matrix4f, vertexConsumers, false, 0, 15728880, false);
+                        this.client.textRenderer.draw("_", (float)p, (float)m, i, false, matrix4f, vertexConsumers, TextRenderer.TextLayerType.NORMAL, 0, 15728880, false);
                     }
                 }
             }
@@ -169,7 +171,7 @@ public class PlaqueScreen extends Screen {
         for(n = 0; n < this.text.length; ++n) {
             string = this.text[n];
             if (string != null && n == this.currentRow && j >= 0) {
-                int q = this.client.textRenderer.getWidth(string.substring(0, Math.min(j, string.length())));
+                int q = this.client.textRenderer.getWidth(string.substring(0, Math.max(Math.min(j, string.length()), 0)));
                 o = q - this.client.textRenderer.getWidth(string) / 2;
                 if (bl && j < string.length()) {
                     fill(matrices, o, m - 1, o + 1, m + this.plaqueEntity.getTextLineHeight(), -16777216 | i);
@@ -182,20 +184,10 @@ public class PlaqueScreen extends Screen {
                     int t = this.client.textRenderer.getWidth(string.substring(0, r)) - this.client.textRenderer.getWidth(string) / 2;
                     int u = Math.min(s, t);
                     int v = Math.max(s, t);
-                    Tessellator tessellator = Tessellator.getInstance();
-                    BufferBuilder bufferBuilder = tessellator.getBuffer();
-                    RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-                    RenderSystem.disableTexture();
                     RenderSystem.enableColorLogicOp();
                     RenderSystem.logicOp(GlStateManager.LogicOp.OR_REVERSE);
-                    bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
-                    bufferBuilder.vertex(matrix4f, (float)u, (float)(m + this.plaqueEntity.getTextLineHeight()), 0.0F).color(0, 0, 255, 255).next();
-                    bufferBuilder.vertex(matrix4f, (float)v, (float)(m + this.plaqueEntity.getTextLineHeight()), 0.0F).color(0, 0, 255, 255).next();
-                    bufferBuilder.vertex(matrix4f, (float)v, (float)m, 0.0F).color(0, 0, 255, 255).next();
-                    bufferBuilder.vertex(matrix4f, (float)u, (float)m, 0.0F).color(0, 0, 255, 255).next();
-                    BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
+                    fill(matrices, u, m, v, m + this.plaqueEntity.getTextLineHeight(), -16776961);
                     RenderSystem.disableColorLogicOp();
-                    RenderSystem.enableTexture();
                 }
             }
         }

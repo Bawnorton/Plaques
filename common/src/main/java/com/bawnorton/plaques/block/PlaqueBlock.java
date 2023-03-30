@@ -15,7 +15,6 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.stat.Stats;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
-import net.minecraft.util.SignType;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.shape.VoxelShape;
@@ -45,7 +44,7 @@ public class PlaqueBlock extends WallSignBlock {
     private final PlaqueType plaqueType;
 
     public PlaqueBlock(Settings settings, PlaqueType plaqueType) {
-        super(settings, SignType.OAK);
+        super(settings, WoodType.OAK);
         this.plaqueType = plaqueType;
     }
 

@@ -13,10 +13,10 @@ public class EngravedTextRenderer extends TextRenderer {
     public EngravedTextRenderer(Function<Identifier, FontStorage> fontStorageAccessor, boolean validateAdvance) {
         super(fontStorageAccessor, validateAdvance);
     }
-    public void drawEngravedText(OrderedText text, float x, float y, int colour, Matrix4f matrix, VertexConsumerProvider vertexConsumers, boolean seeThrough, int backgroundColor, int light) {
+    public void drawEngravedText(OrderedText text, float x, float y, int colour, Matrix4f matrix, VertexConsumerProvider vertexConsumers, TextLayerType type, int backgroundColor, int light) {
         colour = tweakTransparency(colour);
         Matrix4f matrix4f = new Matrix4f(matrix);
-        this.drawLayer(text, x, y, colour, false, matrix4f, vertexConsumers, seeThrough, backgroundColor, light);
+        this.drawLayer(text, x, y, colour, false, matrix4f, vertexConsumers, type, backgroundColor, light);
     }
 
     private static int tweakTransparency(int argb) {
